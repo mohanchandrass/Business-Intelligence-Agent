@@ -73,3 +73,20 @@ def test_analytics_reconciliation():
     assert len(res.tables) == 1
     assert res.tables[0]["data"][0]["Deals"] == 1
     assert res.tables[0]["data"][0]["Value"] == 10000.0
+
+@pytest.mark.asyncio
+async def test_query_business_records():
+    from app.agents.tools.query_records_tool import query_business_records, QueryRecordsArgs
+    raw_deal = RawDealRecord(id="1", name="Naruto", client_code="C1", value="10000", close_date="", stage="B. SQL", status="Open", sector="", owner_code="")
+    record = NormalizationService.normalize_deal(raw_deal)
+    
+    dataset = CrossBoardDataset(deals=[record.record], work_orders=[])
+    snapshot = BusinessDataSnapshot(dataset=dataset, data_quality_report=DataQualityReport())
+    
+    args = QueryRecordsArgs(domain="deals")
+    res = await query_business_records(snapshot, args)
+    
+    assert res.success
+    assert res.data["total_matches"] == 1
+    assert res.data["records"][0]["Project Name"] == "Naruto"
+    assert res.data["records"][0]["Status"] == "Open"

@@ -1,6 +1,7 @@
 from .registry import ToolRegistry, ToolDefinition, ToolResult
 from .pipeline_tools import pipeline_overview_tool, deal_metrics_tool
 from .operational_tools import sector_performance_tool, cross_board_metrics_tool, work_order_metrics_tool
+from .query_records_tool import query_records_tool
 
 def get_default_registry() -> ToolRegistry:
     registry = ToolRegistry()
@@ -9,6 +10,7 @@ def get_default_registry() -> ToolRegistry:
     registry.register(sector_performance_tool)
     registry.register(cross_board_metrics_tool)
     registry.register(work_order_metrics_tool)
+    registry.register(query_records_tool)
     return registry
 
 __all__ = [
