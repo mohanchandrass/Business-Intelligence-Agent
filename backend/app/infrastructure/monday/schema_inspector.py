@@ -1,4 +1,4 @@
-from typing import List, Dict, Any, Tuple
+from typing import List, Dict, Any, Tuple, Optional
 from .discovery_models import BoardDescriptor, ColumnDescriptor, BoardClassification, SemanticMapping
 
 class SchemaInspector:
@@ -46,103 +46,97 @@ class SchemaInspector:
             
         return descriptor
 
-    def _evaluate_as_deals_board(self, descriptor: BoardDescriptor) -> Tuple[float, List[str], Dict[str, str]]:
+    def _score_column(self, col: ColumnDescriptor, expected_types: List[str], aliases: List[str]) -> Tuple[float, List[str]]:
         score = 0.0
         evidence = []
+        
+        lower_title = col.title.lower()
+        
+        if expected_types and col.type not in expected_types:
+            return 0.0, []
+            
+        for alias in aliases:
+            if alias.lower() == lower_title:
+                score += 1.0
+                evidence.append(f"Exact match on alias '{alias}'")
+            elif alias.lower() in lower_title:
+                score += 0.5
+                evidence.append(f"Partial match on alias '{alias}'")
+                
+        if expected_types:
+            evidence.append(f"Matches expected type {col.type}")
+            
+        return score, evidence
+
+    def _find_best_column(self, descriptor: BoardDescriptor, expected_types: List[str], aliases: List[str]) -> Tuple[Optional[ColumnDescriptor], float, List[str]]:
+        best_col = None
+        best_score = 0.0
+        best_evidence = []
+        
+        for col in descriptor.columns:
+            score, evidence = self._score_column(col, expected_types, aliases)
+            if score > best_score:
+                best_col = col
+                best_score = score
+                best_evidence = evidence
+                
+        return best_col, best_score, best_evidence
+
+    def _evaluate_as_deals_board(self, descriptor: BoardDescriptor) -> Tuple[float, List[str], Dict[str, str]]:
+        board_score = 0.0
+        board_evidence = []
         mapping = {}
         
-        # Name check
         if "deal" in descriptor.board_name.lower() or "funnel" in descriptor.board_name.lower() or "pipeline" in descriptor.board_name.lower():
-            score += 0.3
-            evidence.append(f"Board name '{descriptor.board_name}' suggests deals/pipeline.")
+            board_score += 0.3
+            board_evidence.append(f"Board name '{descriptor.board_name}' suggests deals/pipeline.")
             
-        # Semantic Column Checks
-        client_col = descriptor.get_column_by_title("client code")
-        if client_col:
-            score += 0.2
-            evidence.append(f"Found Client Code column ({client_col.id})")
-            mapping["client_code"] = client_col.id
-            
-        value_col = descriptor.get_column_by_title("deal value") or descriptor.get_column_by_title("value")
-        if value_col and value_col.type == "numeric":
-            score += 0.2
-            evidence.append(f"Found Deal Value column ({value_col.id})")
-            mapping["deal_value"] = value_col.id
-            
-        stage_col = descriptor.get_column_by_title("deal stage") or descriptor.get_column_by_title("stage")
-        if stage_col:
-            score += 0.2
-            evidence.append(f"Found Deal Stage column ({stage_col.id})")
-            mapping["deal_stage"] = stage_col.id
-            
-        status_col = descriptor.get_column_by_title("deal status") or descriptor.get_column_by_title("status")
-        if status_col:
-            mapping["deal_status"] = status_col.id
-            
-        owner_col = descriptor.get_column_by_title("owner")
-        if owner_col:
-            mapping["owner_code"] = owner_col.id
-            
-        sector_col = descriptor.get_column_by_title("sector")
-        if sector_col:
-            mapping["sector"] = sector_col.id
-            
-        close_date_col = descriptor.get_column_by_title("close date")
-        if close_date_col:
-            mapping["close_date"] = close_date_col.id
-            
-        return score, evidence, mapping
+        # Define semantic fields and their aliases
+        semantic_fields = {
+            "client_code": (["dropdown", "text", "name"], ["client code", "customer", "client"]),
+            "deal_value": (["numeric", "numbers", "number"], ["deal value", "value", "amount"]),
+            "deal_stage": (["status", "dropdown"], ["deal stage", "stage", "pipeline stage"]),
+            "deal_status": (["status", "dropdown"], ["deal status", "status"]),
+            "owner_code": (["status", "dropdown", "text", "people", "name"], ["owner", "assignee", "kam"]),
+            "sector": (["status", "dropdown", "text"], ["sector", "industry", "service"]),
+            "close_date": (["date"], ["close date", "closure date", "date"])
+        }
+        
+        for field, (expected_types, aliases) in semantic_fields.items():
+            best_col, score, evidence = self._find_best_column(descriptor, expected_types, aliases)
+            if best_col and score > 0:
+                mapping[field] = best_col.id
+                board_score += 0.1
+                board_evidence.append(f"Found {field} -> {best_col.id} (Score {score}: {evidence})")
+                
+        return board_score, board_evidence, mapping
 
     def _evaluate_as_work_orders_board(self, descriptor: BoardDescriptor) -> Tuple[float, List[str], Dict[str, str]]:
-        score = 0.0
-        evidence = []
+        board_score = 0.0
+        board_evidence = []
         mapping = {}
         
-        # Name check
         if "work order" in descriptor.board_name.lower() or "execution" in descriptor.board_name.lower() or "tracker" in descriptor.board_name.lower():
-            score += 0.3
-            evidence.append(f"Board name '{descriptor.board_name}' suggests work orders.")
+            board_score += 0.3
+            board_evidence.append(f"Board name '{descriptor.board_name}' suggests work orders.")
             
-        # Semantic Column Checks
-        serial_col = descriptor.get_column_by_title("serial")
-        if serial_col:
-            score += 0.3
-            evidence.append(f"Found Serial # column ({serial_col.id})")
-            mapping["serial_number"] = serial_col.id
-            
-        customer_col = descriptor.get_column_by_title("customer")
-        if customer_col:
-            score += 0.1
-            mapping["customer_code"] = customer_col.id
-            
-        status_col = descriptor.get_column_by_title("execution status")
-        if status_col:
-            score += 0.2
-            evidence.append(f"Found Execution Status column ({status_col.id})")
-            mapping["execution_status"] = status_col.id
-            
-        excl_gst_col = descriptor.get_column_by_title("amount (excl")
-        if excl_gst_col:
-            mapping["amount_excl_gst"] = excl_gst_col.id
-            
-        incl_gst_col = descriptor.get_column_by_title("amount (incl")
-        if incl_gst_col:
-            mapping["amount_incl_gst"] = incl_gst_col.id
-            
-        receivable_col = descriptor.get_column_by_title("amount to be received")
-        if receivable_col:
-            mapping["amount_receivable"] = receivable_col.id
-            
-        po_date_col = descriptor.get_column_by_title("po date")
-        if po_date_col:
-            mapping["po_date"] = po_date_col.id
-            
-        doc_type_col = descriptor.get_column_by_title("document type")
-        if doc_type_col:
-            mapping["document_type"] = doc_type_col.id
-            
-        sector_col = descriptor.get_column_by_title("sector")
-        if sector_col:
-            mapping["sector"] = sector_col.id
-
-        return score, evidence, mapping
+        semantic_fields = {
+            "serial_number": (["text", "name", "dropdown"], ["serial", "serial #", "work order #"]),
+            "customer_code": (["dropdown", "text", "status"], ["customer name code", "customer", "client"]),
+            "execution_status": (["status", "dropdown"], ["execution status", "status", "state"]),
+            "amount_excl_gst": (["numeric", "numbers"], ["amount in rupees (excl", "amount (excl", "excl gst", "amount excl", "billed value"]),
+            "amount_incl_gst": (["numeric", "numbers"], ["amount in rupees (incl", "amount (incl", "incl gst", "amount incl"]),
+            "amount_receivable": (["numeric", "numbers"], ["amount receivable", "receivable", "amount to be received"]),
+            "po_date": (["date"], ["date of po/loi", "po date", "date of po", "loi date"]),
+            "document_type": (["status", "dropdown", "text"], ["document type", "doc type"]),
+            "sector": (["status", "dropdown", "text"], ["sector", "industry"])
+        }
+        
+        for field, (expected_types, aliases) in semantic_fields.items():
+            best_col, score, evidence = self._find_best_column(descriptor, expected_types, aliases)
+            if best_col and score > 0:
+                mapping[field] = best_col.id
+                board_score += 0.1
+                board_evidence.append(f"Found {field} -> {best_col.id} (Score {score}: {evidence})")
+                
+        return board_score, board_evidence, mapping

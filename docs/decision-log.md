@@ -1,61 +1,55 @@
-# Skylark Drones — Decision Log
+# Skylark BI Agent — Decision Log
 
-## Decision 1 — Two-Application Architecture
-**Decision:** Two-application architecture.
-**Reason:** Next.js handles presentation well, while Python provides superior tools for deterministic data processing and AI orchestration.
-**Trade-off:** Slightly higher complexity in setup, but vastly better maintainability.
+## 1. Monday.com API vs MCP
+**Decision:** Direct Monday.com GraphQL API.
+**Reason:** While MCP (Model Context Protocol) is standardizing LLM-to-tool connections, building a custom GraphQL integration provided absolute control over deterministic parsing, aggressive pagination, and robust error handling essential for this 6-hour hackathon constraints.
 
-## Decision 2 — Frontend Stack
-**Decision:** Next.js for frontend.
-**Reason:** Allows rapid development of the UI and components.
-**Trade-off:** React ecosystem overhead, but acceptable given the capabilities.
+## 2. Dynamic Board Discovery vs Hardcoded Board IDs
+**Decision:** Dynamic Board Discovery.
+**Reason:** The assignment required building a generalized BI agent rather than a script locked to a specific workspace. The `SchemaInspector` dynamically identifies Deals and Work Orders boards based on column semantics, allowing it to adapt to different Monday.com setups seamlessly.
 
-## Decision 3 — Backend Stack
-**Decision:** FastAPI/Python for backend.
-**Reason:** Python is ideal for messy data (pandas/openpyxl) and FastAPI provides rapid, type-safe API generation.
-**Trade-off:** Additional service to run locally, but ensures proper separation of concerns.
+## 3. Deterministic Python Analytics vs LLM-Generated Calculations
+**Decision:** Deterministic Python analytics.
+**Reason:** LLMs hallucinate or fail at arithmetic when dealing with hundreds of records. All KPIs and aggregations are computed deterministically in Python using the canonical data models. The LLM is only used to synthesize the resulting exact numbers into an executive summary.
 
-## Decision 4 — Communication Boundary
-**Decision:** REST API boundary (`/api/v1/`).
-**Reason:** Enforces a strict contract between the frontend and backend, allowing simultaneous independent development.
-**Trade-off:** Requires defining and maintaining schema contracts.
+## 4. Gemini + Tool Calling for Agent Orchestration
+**Decision:** Google Gemini with structured tool calling.
+**Reason:** Gemini provides fast and reliable tool-calling capabilities. The `AgentOrchestrator` maps Python functions to Gemini tool definitions dynamically and manages the conversation loop, ensuring the LLM can fetch the exact analytical slice it needs to answer the user's prompt.
 
-## Decision 5 — Architecture Pattern
-**Decision:** Modular monolith rather than microservices.
-**Reason:** Keeps the deployment simple for a 5-hour hackathon while retaining the benefits of modularity.
-**Trade-off:** Less scalable than true microservices, but perfectly appropriate for this stage.
+## 5. Canonical Domain Models and Normalization Layer
+**Decision:** Strict Pydantic domain models separating Monday.com DTOs from Business logic.
+**Reason:** Monday.com data is messy (e.g., text instead of numbers, varying statuses). The Normalization Layer catches invalid formats and casts everything to canonical `Deal` and `WorkOrder` entities. Analytics run strictly against the canonical models.
 
-## Decision 6 — Dependency Rule
-**Decision:** Strict Dependency inversion.
-**Reason:** Business logic (domain) must not depend on infrastructure details (like monday.com API). Infrastructure implements domain interfaces.
-**Trade-off:** Initial setup requires more boilerplate (interfaces/protocols).
+## 6. Query-Scoped Data-Quality Reporting
+**Decision:** Explicitly track and report normalization failures.
+**Reason:** Executives must trust the data. If $50k in deals is excluded because a user typed "50k" instead of "50000" in Monday.com, the `DataQualityReport` tracks the exclusion and the LLM explicitly warns the user about the missing data in its response.
 
-## Decision 7 — Data Source
-**Decision:** Dynamic monday.com access.
-**Reason:** Meets assignment requirements to not hardcode data; ensures the BI agent uses live data.
-**Trade-off:** Requires handling API limits and pagination.
+## 7. Request-Scoped BusinessDataSnapshot
+**Decision:** Fetch all relevant data lazily once per request into a `BusinessDataSnapshot`.
+**Reason:** Prevents the agent from endlessly querying Monday.com within a single multi-turn tool loop. The snapshot acts as an immutable, point-in-time state for all deterministic tools to query against.
 
-## Decision 8 — AI Provider
-**Decision:** Gemini provider abstraction.
-**Reason:** Prevents vendor lock-in and allows for easier test mocking.
-**Trade-off:** Extra abstraction layer over the native SDK.
+## 8. Lightweight In-Memory Board Catalog Caching
+**Decision:** In-memory caching for `BoardCatalog` discovery.
+**Reason:** Fetching and inspecting all board schemas is expensive. Caching schemas in-memory drastically speeds up query times without introducing external infrastructure dependencies like Redis, aligning with the hackathon's time constraint.
 
-## Decision 9 — Analytics
-**Decision:** Deterministic analytics before LLM explanation.
-**Reason:** LLMs are unreliable at arithmetic across hundreds of records; Python handles computation deterministically.
-**Trade-off:** Requires writing manual aggregation logic instead of just prompting the LLM.
+## 9. Structured KPI/Table Response Data
+**Decision:** Tools return structured data sets (JSON/dicts).
+**Reason:** Instead of asking the LLM to format markdown tables blindly, returning strict data objects forces the LLM to write factual summaries based on concrete properties. This prevents hallucinations in reporting.
 
-## Decision 10 — Domain Models
-**Decision:** Domain model deferred until actual data inspection.
-**Reason:** Prevents building assumptions that conflict with the actual monday.com boards.
-**Trade-off:** Delays full implementation of application logic until data profiling is done.
+## 10. Frontend Simplicity and Executive UX
+**Decision:** A ChatGPT-style conversational interface over a static dashboard.
+**Reason:** Executives want answers, not tools to learn. The UI prioritizes a polished, intent-aware loading state, clean typography, and a conversational flow that presents clear KPIs and explanations directly.
 
-## Decision 11 — Pydantic Configuration Architecture
-**Decision:** Use `pydantic-settings` to parse `.env` files and validate settings with `default_factory` for strict validation.
-**Reason:** The backend should fail-fast at startup if critical API credentials are missing. `default_factory` avoids baking in import-time environment state into class defaults, ensuring robust testability.
-**Trade-off:** slightly more verbose configuration definitions.
+## 11. Leadership Updates Interpretation
+**Decision:** Embedded into the agent prompt and deterministic tools.
+**Reason:** The system satisfies the optional leadership update requirement by instructing the agent to structure answers around KPIs, risk factors, and trends. When asked for a summary, the agent leverages cross-board analysis (Deals vs Execution) to present a high-level executive briefing.
 
-## Decision 12 — Cross-Board Join Strategy
-**Decision:** Use `Serial #` ("SDPLDEAL-XXX") in the Work Orders board to map to the `name` column in the Deals board.
-**Reason:** Data profiling revealed that Customer Identifiers differ slightly (`COMPANY` vs `WOCOMPANY`), but the `Serial #` is a strict string match to the Deal Identifier.
-**Trade-off:** Demands a normalization layer before aggregation, but guarantees high fidelity joins.
+---
+
+## What We Would Improve With More Time
+
+1. **Broader Schema Inference & Relationship Discovery**: Use a lightweight LLM call to classify messy columns dynamically instead of relying on regex/semantic alias lists.
+2. **Persistent Caching & Webhooks**: Transition from an on-demand fetching model to a materialized view synced via Monday.com webhooks to support workspaces with hundreds of thousands of items instantly.
+3. **Authentication & Multi-User Support**: Add Clerk/Auth0 and restrict Monday.com API access via OAuth on a per-tenant basis.
+4. **Richer Visualizations**: Pass structured data (Recharts/Chart.js specs) directly from the backend to the frontend for rich, interactive, deterministic charting embedded in the chat log.
+5. **E2E Testing**: Add Cypress/Playwright tests covering the full flow from frontend UI input to the mocked Monday.com backend response.

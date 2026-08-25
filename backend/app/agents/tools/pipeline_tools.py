@@ -17,10 +17,10 @@ async def get_pipeline_overview(snapshot: BusinessDataSnapshot, args: EmptyArgs)
         tool_name="get_pipeline_overview",
         success=True,
         data={
-            "value": result.value,
-            "dimensions": result.dimensions
+            "kpis": result.kpis,
+            "tables": result.tables
         },
-        warnings=result.data_quality_warnings
+        warnings=result.warnings
     )
 
 async def get_deal_metrics(snapshot: BusinessDataSnapshot, args: EmptyArgs) -> ToolResult:
@@ -31,10 +31,10 @@ async def get_deal_metrics(snapshot: BusinessDataSnapshot, args: EmptyArgs) -> T
         tool_name="get_deal_metrics",
         success=True,
         data={
-            "value": result.value,
-            "dimensions": result.dimensions
+            "kpis": result.kpis,
+            "tables": result.tables
         },
-        warnings=result.data_quality_warnings
+        warnings=result.warnings
     )
 
 pipeline_overview_tool = ToolDefinition(

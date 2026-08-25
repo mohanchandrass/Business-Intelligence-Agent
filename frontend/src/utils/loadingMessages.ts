@@ -1,91 +1,111 @@
 /**
- * Lightweight deterministic loading message utility.
- * Uses keyword matching to pick appropriate message sets — no LLM calls.
+ * One-way loading stage machine.
+ *
+ * Intent detection picks a sequence of stages tailored to the query.
+ * The component advances through them with timeouts and STOPS at the last
+ * stage — it never cycles back.
+ *
+ * Structure is intentionally exposed so the backend can later push real stage
+ * updates (e.g. via SSE) without requiring a redesign here.
  */
 
-type MessageSet = readonly string[];
+// ─── Types ────────────────────────────────────────────────────────────────────
 
-const GREETING_MESSAGES: MessageSet = [
-  "Thinking...",
-  "Preparing a response...",
-  "Getting back to you...",
-];
+export interface LoadingStage {
+  /** Human-readable label shown in the UI. */
+  text: string;
+  /**
+   * Minimum time (ms) to display this stage before advancing to the next one.
+   * The LAST stage in a sequence has no minimum — the component waits there
+   * indefinitely until the response arrives.
+   */
+  minDurationMs: number;
+}
 
-const PIPELINE_MESSAGES: MessageSet = [
-  "Checking the pipeline...",
-  "Reviewing deal data...",
-  "Working through the pipeline...",
-  "Preparing your insights...",
-];
+export type IntentCategory =
+  | "greeting"
+  | "general"
+  | "business"
+  | "pipeline"
+  | "work_order"
+  | "cross_board";
 
-const WORK_ORDER_MESSAGES: MessageSet = [
-  "Reviewing work orders...",
-  "Checking operational data...",
-  "Looking for relevant work orders...",
-  "Working through the numbers...",
-];
+// ─── Stage Sequences ──────────────────────────────────────────────────────────
+// Each sequence is ONE-WAY only: A → B → C (then stay at C).
 
-const CROSS_BOARD_MESSAGES: MessageSet = [
-  "Comparing business data...",
-  "Connecting the relevant data...",
-  "Working across your data...",
-  "Preparing the comparison...",
-];
+const STAGES: Record<IntentCategory, LoadingStage[]> = {
+  greeting: [
+    { text: "Thinking...", minDurationMs: 0 },
+    // Single stage — stays here for simple conversational messages.
+  ],
 
-const BUSINESS_MESSAGES: MessageSet = [
-  "Looking through the business data...",
-  "Checking the relevant data...",
-  "Working through the numbers...",
-  "Preparing your insights...",
-];
+  general: [
+    { text: "Thinking...", minDurationMs: 1500 },
+    { text: "Understanding your request...", minDurationMs: 0 },
+  ],
 
-const GENERAL_MESSAGES: MessageSet = [
-  "Thinking...",
-  "Working on that...",
-  "Preparing your answer...",
-  "Looking into it...",
-];
+  business: [
+    { text: "Thinking...", minDurationMs: 1500 },
+    { text: "Understanding your request...", minDurationMs: 1800 },
+    { text: "Preparing your insights...", minDurationMs: 0 },
+  ],
 
-// Keyword sets
-const GREETING_KEYWORDS = /^(hi|hello|hey|good morning|good afternoon|good evening|thanks|thank you|sup|howdy)\b/i;
+  pipeline: [
+    { text: "Thinking...", minDurationMs: 1500 },
+    { text: "Understanding your request...", minDurationMs: 1800 },
+    { text: "Checking the relevant data...", minDurationMs: 2000 },
+    { text: "Preparing your insights...", minDurationMs: 0 },
+  ],
 
-const PIPELINE_KEYWORDS = /\b(pipeline|deal|deals|sales|revenue|funnel|opportunity|opportunities|forecast|quota|crm|lead|leads)\b/i;
+  work_order: [
+    { text: "Thinking...", minDurationMs: 1500 },
+    { text: "Understanding your request...", minDurationMs: 1800 },
+    { text: "Checking operational data...", minDurationMs: 2000 },
+    { text: "Preparing your insights...", minDurationMs: 0 },
+  ],
 
-const WORK_ORDER_KEYWORDS = /\b(work order|work orders|workorder|project|projects|execution|operational|operations|ops|service|job|jobs|deployment|deployments)\b/i;
+  cross_board: [
+    { text: "Thinking...", minDurationMs: 1500 },
+    { text: "Understanding your request...", minDurationMs: 1800 },
+    { text: "Checking the relevant data...", minDurationMs: 2000 },
+    { text: "Comparing the results...", minDurationMs: 2200 },
+    { text: "Preparing your insights...", minDurationMs: 0 },
+  ],
+};
 
-const CROSS_BOARD_KEYWORDS = /\b(compare|comparison|versus|vs\b|against|both|difference|breakdown|split|cross)\b/i;
+// ─── Intent Detection ─────────────────────────────────────────────────────────
 
-const BUSINESS_KEYWORDS = /\b(data|metrics|number|numbers|report|stats|statistics|analytics|performance|kpi|quarter|q1|q2|q3|q4|monthly|weekly|annual|revenue|profit|growth|sector|industry)\b/i;
+const GREETING_RE = /^(hi|hello|hey|good morning|good afternoon|good evening|thanks|thank you|sup|howdy)\b/i;
+const PIPELINE_RE  = /\b(pipeline|deal|deals|sales|revenue|funnel|opportunity|opportunities|forecast|quota|crm|lead|leads)\b/i;
+const WORK_ORDER_RE = /\b(work order|work orders|workorder|project|projects|execution|operational|operations|ops|service|job|jobs|deployment|deployments)\b/i;
+const CROSS_BOARD_RE = /\b(compare|comparison|versus|vs\b|against|both|difference|breakdown|split|cross)\b/i;
+const BUSINESS_RE = /\b(data|metrics|number|numbers|report|stats|statistics|analytics|performance|kpi|quarter|q[1-4]|monthly|weekly|annual|profit|growth|sector|industry)\b/i;
 
-export function getLoadingMessages(userMessage: string): MessageSet {
-  const msg = (userMessage || "").trim();
+function detectIntent(message: string): IntentCategory {
+  const msg = (message || "").trim();
 
-  if (!msg) return GENERAL_MESSAGES;
+  if (!msg) return "general";
 
-  // Greeting check first — short-circuit before any data analysis wording
-  if (GREETING_KEYWORDS.test(msg) && msg.split(/\s+/).length <= 5) {
-    return GREETING_MESSAGES;
-  }
+  // Greeting: only if it's a short conversational opener
+  if (GREETING_RE.test(msg) && msg.split(/\s+/).length <= 5) return "greeting";
 
-  // Cross-board / comparison — check before individual board categories
-  if (CROSS_BOARD_KEYWORDS.test(msg)) {
-    return CROSS_BOARD_MESSAGES;
-  }
+  // Cross-board before individual categories (it may mention both pipeline + WO)
+  if (CROSS_BOARD_RE.test(msg)) return "cross_board";
 
-  // Pipeline / deals
-  if (PIPELINE_KEYWORDS.test(msg)) {
-    return PIPELINE_MESSAGES;
-  }
+  if (PIPELINE_RE.test(msg)) return "pipeline";
+  if (WORK_ORDER_RE.test(msg)) return "work_order";
+  if (BUSINESS_RE.test(msg)) return "business";
 
-  // Work orders / operations
-  if (WORK_ORDER_KEYWORDS.test(msg)) {
-    return WORK_ORDER_MESSAGES;
-  }
+  return "general";
+}
 
-  // General business / data questions
-  if (BUSINESS_KEYWORDS.test(msg)) {
-    return BUSINESS_MESSAGES;
-  }
+// ─── Public API ───────────────────────────────────────────────────────────────
 
-  return GENERAL_MESSAGES;
+/**
+ * Returns the ordered one-way stage sequence appropriate for the given message.
+ * The caller is responsible for advancing through stages using the
+ * `minDurationMs` of each stage as the advancement delay.
+ */
+export function getLoadingStages(userMessage: string): LoadingStage[] {
+  return STAGES[detectIntent(userMessage)];
 }

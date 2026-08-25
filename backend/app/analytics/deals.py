@@ -45,17 +45,27 @@ class DealAnalytics:
         if missing_sector_count > 0:
             warnings.append(f"{missing_sector_count} deals have an unknown sector.")
 
+        table_data = []
+        for status, count in status_distribution.items():
+            table_data.append({
+                "Status": status,
+                "Deals": count
+            })
+
         return AnalyticsResult(
-            metric_name="Deal Metrics",
-            value=total_value,
-            dimensions={
-                "deal_count": deal_count,
-                "average_deal_value": avg_value,
-                "median_deal_value": median_value,
-                "status_distribution": dict(status_distribution),
-                "sector_distribution": dict(sector_distribution),
-                "won_deals": status_distribution.get(DealStatus.WON.value, 0)
-            },
-            data_quality_warnings=warnings,
-            source_scope="Monday.com Deals Board (All deals)"
+            kpis=[
+                {"type": "kpi", "title": "Total Deals", "value": str(deal_count)},
+                {"type": "kpi", "title": "Avg Deal Value", "value": f"₹{avg_value:,.2f}"},
+                {"type": "kpi", "title": "Won Deals", "value": str(status_distribution.get(DealStatus.WON.value, 0))}
+            ],
+            tables=[
+                {
+                    "type": "table",
+                    "title": "Deal Status Distribution",
+                    "columns": ["Status", "Deals"],
+                    "data": table_data
+                }
+            ],
+            warnings=warnings,
+            metadata={"scope": "Monday.com Deals Board (All deals)"}
         )

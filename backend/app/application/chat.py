@@ -21,26 +21,21 @@ class ChatApplicationService:
     async def process_query(self, query: str, req_id: str = "REQ unknown") -> Dict[str, Any]:
         try:
             logger.info(f"[{req_id}] CHAT SERVICE processing query")
-            # 1. Fetch fresh snapshot for the request
-            logger.info(f"[{req_id}] Requesting BusinessDataSnapshot")
-            snapshot: BusinessDataSnapshot = await self.data_service.get_snapshot(req_id)
-            logger.info(f"[{req_id}] SNAPSHOT constructed")
+            
+            async def snapshot_factory():
+                logger.info(f"[{req_id}] Requesting BusinessDataSnapshot (Lazy)")
+                return await self.data_service.get_snapshot(req_id)
             
             # 2. Run orchestrator
             logger.info(f"[{req_id}] Handing off to AgentOrchestrator")
-            answer = await self.orchestrator.execute(query, snapshot, req_id)
+            answer = await self.orchestrator.execute(query, snapshot_factory, req_id)
 
             
             # 3. Assemble response mapping to the frontend contract
+            # Since the snapshot is fetched lazily, we don't have it here to check global warnings.
+            # But the user requested: "Only show warnings relevant to the requested analysis."
+            # The warnings will be part of the structured tool result!
             warnings = []
-            if snapshot.data_quality_report.excluded_records > 0:
-                warnings.append(
-                    f"Data Quality Note: {snapshot.data_quality_report.excluded_records} records "
-                    f"were excluded from analysis due to normalization errors."
-                )
-
-            # In a full implementation, we could parse the LLM's response to extract 
-            # structured metrics/insights to populate the UI charts/KPIs.
             # For this MVP, we return the text response and high-level warnings.
             return {
                 "answer": answer,

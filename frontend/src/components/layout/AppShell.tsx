@@ -11,7 +11,7 @@ export function AppShell({ children, onNewChat }: AppShellProps) {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   return (
-    <div className="flex flex-col h-screen w-full bg-background overflow-hidden relative">
+    <div className="flex flex-col h-screen w-full bg-background overflow-hidden">
       {/* Universal Header */}
       <header className="flex items-center justify-between p-4 border-b border-border bg-surface shrink-0 z-10">
         <h1 className="text-lg font-semibold text-foreground tracking-tight">Skylark BI</h1>
@@ -35,8 +35,10 @@ export function AppShell({ children, onNewChat }: AppShellProps) {
         </div>
       </header>
       
-      {/* Main Chat Area */}
-      <main className="flex-1 w-full h-full relative overflow-hidden flex flex-col">
+      {/* Main Chat Area — flex-1 gives it all remaining height after the header.
+          overflow-hidden clips children while flex-col+h-full propagates a
+          definite height down to ChatContainer so its scroll area can work. */}
+      <main className="flex-1 min-h-0 w-full overflow-hidden flex flex-col">
         {children}
       </main>
 

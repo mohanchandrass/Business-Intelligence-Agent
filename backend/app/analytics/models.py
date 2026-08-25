@@ -4,9 +4,8 @@ from pydantic import BaseModel, ConfigDict, Field
 class AnalyticsResult(BaseModel):
     model_config = ConfigDict(frozen=True)
 
-    metric_name: str
-    value: Any
-    dimensions: Optional[Dict[str, Any]] = None
-    data_quality_warnings: List[str] = Field(default_factory=list)
-    source_scope: str = "Deals and Work Orders"
+    kpis: List[Dict[str, Any]] = Field(default_factory=list)
+    tables: List[Dict[str, Any]] = Field(default_factory=list)
+    insights: List[str] = Field(default_factory=list)
+    warnings: List[str] = Field(default_factory=list)
     metadata: Dict[str, Any] = Field(default_factory=dict)

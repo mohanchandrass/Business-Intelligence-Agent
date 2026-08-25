@@ -22,10 +22,10 @@ async def get_sector_performance(snapshot: BusinessDataSnapshot, args: SectorArg
         tool_name="get_sector_performance",
         success=True,
         data={
-            "value": result.value,
-            "dimensions": result.dimensions
+            "kpis": result.kpis,
+            "tables": result.tables
         },
-        warnings=result.data_quality_warnings
+        warnings=result.warnings
     )
 
 async def get_cross_board_metrics(snapshot: BusinessDataSnapshot, args: EmptyArgs) -> ToolResult:
@@ -36,10 +36,10 @@ async def get_cross_board_metrics(snapshot: BusinessDataSnapshot, args: EmptyArg
         tool_name="get_cross_board_metrics",
         success=True,
         data={
-            "value": result.value,
-            "dimensions": result.dimensions
+            "kpis": result.kpis,
+            "tables": result.tables
         },
-        warnings=result.data_quality_warnings
+        warnings=result.warnings
     )
 
 async def get_work_order_metrics(snapshot: BusinessDataSnapshot, args: EmptyArgs) -> ToolResult:
@@ -50,10 +50,10 @@ async def get_work_order_metrics(snapshot: BusinessDataSnapshot, args: EmptyArgs
         tool_name="get_work_order_metrics",
         success=True,
         data={
-            "value": result.value,
-            "dimensions": result.dimensions
+            "kpis": result.kpis,
+            "tables": result.tables
         },
-        warnings=result.data_quality_warnings
+        warnings=result.warnings
     )
 
 sector_performance_tool = ToolDefinition(

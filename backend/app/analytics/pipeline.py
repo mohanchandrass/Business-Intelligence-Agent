@@ -36,14 +36,27 @@ class PipelineAnalytics:
         if missing_value_count > 0:
             warnings.append(f"{missing_value_count} open deals have no assigned monetary value. Pipeline value may be underrepresented.")
 
+        table_data = []
+        for stage, count in deals_by_stage.items():
+            table_data.append({
+                "Pipeline Stage": stage,
+                "Deals": count,
+                "Value": value_by_stage[stage]
+            })
+
         return AnalyticsResult(
-            metric_name="Pipeline Overview",
-            value=total_value,
-            dimensions={
-                "deal_count": deal_count,
-                "deals_by_stage": dict(deals_by_stage),
-                "value_by_stage": dict(value_by_stage),
-            },
-            data_quality_warnings=warnings,
-            source_scope="Monday.com Deals Board (Status: Open)"
+            kpis=[
+                {"type": "kpi", "title": "Active Deals", "value": str(deal_count)},
+                {"type": "kpi", "title": "Pipeline Value", "value": f"₹{total_value:,.2f}"}
+            ],
+            tables=[
+                {
+                    "type": "table",
+                    "title": "Pipeline Distribution",
+                    "columns": ["Pipeline Stage", "Deals", "Value"],
+                    "data": table_data
+                }
+            ],
+            warnings=warnings,
+            metadata={"scope": "Monday.com Deals Board (Status: Open)"}
         )

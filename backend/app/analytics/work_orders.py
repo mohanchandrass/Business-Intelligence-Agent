@@ -29,15 +29,27 @@ class WorkOrderAnalytics:
         if missing_value_count > 0:
             warnings.append(f"{missing_value_count} work orders have no explicit value_excl_gst. Value metrics may be incomplete.")
 
+        table_data = []
+        for status, count in execution_status_dist.items():
+            table_data.append({
+                "Execution Status": status,
+                "Count": count
+            })
+
         return AnalyticsResult(
-            metric_name="Operational Metrics",
-            value=total_wos,
-            dimensions={
-                "total_work_orders": total_wos,
-                "total_value": total_value,
-                "execution_status_distribution": dict(execution_status_dist),
-                "delayed_count": execution_status_dist.get(WorkOrderExecutionStatus.PAUSED_STUCK.value, 0)
-            },
-            data_quality_warnings=warnings,
-            source_scope="Monday.com Work Orders Board"
+            kpis=[
+                {"type": "kpi", "title": "Total Work Orders", "value": str(total_wos)},
+                {"type": "kpi", "title": "Total Value (Excl GST)", "value": f"₹{total_value:,.2f}"},
+                {"type": "kpi", "title": "Delayed/Stuck", "value": str(execution_status_dist.get(WorkOrderExecutionStatus.PAUSED_STUCK.value, 0))}
+            ],
+            tables=[
+                {
+                    "type": "table",
+                    "title": "Execution Status Distribution",
+                    "columns": ["Execution Status", "Count"],
+                    "data": table_data
+                }
+            ],
+            warnings=warnings,
+            metadata={"scope": "Monday.com Work Orders Board"}
         )

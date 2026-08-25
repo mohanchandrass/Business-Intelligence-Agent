@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Callable, Awaitable, Optional
 from google.genai import types
 
 from app.config import get_settings
@@ -42,8 +42,9 @@ class AgentOrchestrator:
         )
         return types.Tool(function_declarations=[func_decl])
 
-    async def execute(self, query: str, snapshot: BusinessDataSnapshot, req_id: str = "REQ unknown") -> str:
+    async def execute(self, query: str, snapshot_factory: Callable[[], Awaitable[BusinessDataSnapshot]], req_id: str = "REQ unknown") -> str:
         messages = [{"role": "user", "parts": [{"text": query}]}]
+        snapshot: Optional[BusinessDataSnapshot] = None
         
         logger.info(f"[{req_id}] TOOL REGISTRY preparing tools")
         tools = [self._tool_def_to_google_schema(t) for t in self.registry.get_all_tools()]
@@ -92,6 +93,10 @@ class AgentOrchestrator:
             })
             
             # 2. Execute tools
+            if response.tool_calls and snapshot is None:
+                logger.info(f"[{req_id}] Tool call requested, fetching BusinessDataSnapshot lazily")
+                snapshot = await snapshot_factory()
+
             tool_responses = []
             for tc in response.tool_calls:
                 logger.info(f"[{req_id}] TOOL CALL executing: {tc.tool_name}")
