@@ -19,7 +19,7 @@ export function VisualizationRenderer({ data }: VisualizationRendererProps) {
   return (
     <div className="flex flex-col gap-6 mt-6 mb-4 w-full">
       {kpis.length > 0 && (
-        <div className="flex flex-wrap gap-4">
+        <div className="grid gap-3 w-full" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))" }}>
           {kpis.map((kpi, idx) => (
             <KpiCard key={idx} data={kpi as any} />
           ))}

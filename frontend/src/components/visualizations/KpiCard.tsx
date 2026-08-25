@@ -9,10 +9,10 @@ interface KpiCardProps {
 
 export function KpiCard({ data }: KpiCardProps) {
   return (
-    <Card className="p-4 flex flex-col justify-between h-full min-w-0 flex-1">
-      <h3 className="text-sm font-medium text-muted mb-2 break-words whitespace-normal" style={{ overflowWrap: "anywhere" }}>{data.title}</h3>
+    <Card className="p-4 flex flex-col justify-between h-full min-w-0">
+      <h3 className="text-sm font-medium text-muted mb-2 break-words whitespace-normal">{data.title}</h3>
       <div className="flex items-baseline gap-2 mb-1">
-        <span className="text-2xl font-bold tracking-tight text-foreground whitespace-normal break-words" style={{ overflowWrap: "anywhere" }}>{data.value}</span>
+        <span className="text-2xl font-bold tracking-tight text-foreground whitespace-nowrap">{data.value}</span>
       </div>
       
       {(data.change || data.description) && (
