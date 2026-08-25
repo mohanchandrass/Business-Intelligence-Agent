@@ -14,7 +14,13 @@ export function AppShell({ children, onNewChat }: AppShellProps) {
     <div className="flex flex-col h-screen w-full bg-background overflow-hidden">
       {/* Universal Header */}
       <header className="flex items-center justify-between p-4 border-b border-border bg-surface shrink-0 z-10">
-        <h1 className="text-lg font-semibold text-foreground tracking-tight">Skylark BI</h1>
+        <h1 
+          className="text-lg font-semibold text-foreground tracking-tight cursor-pointer hover:text-primary transition-colors"
+          onClick={onNewChat}
+          title="Return to Home"
+        >
+          Skylark BI
+        </h1>
         
         <div className="flex items-center gap-3">
           <button 

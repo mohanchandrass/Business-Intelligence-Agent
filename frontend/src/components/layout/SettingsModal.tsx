@@ -24,7 +24,8 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
   const [statusData, setStatusData] = useState<StatusData | null>(null);
 
   const isMock = process.env.NEXT_PUBLIC_USE_MOCK_API === "true";
-  const backendUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+  const defaultUrl = process.env.NODE_ENV === "production" ? "https://business-intelligence-agent-yzpi.onrender.com" : "http://localhost:8000";
+  const backendUrl = process.env.VITE_API_URL || process.env.NEXT_PUBLIC_API_BASE_URL || defaultUrl;
 
   useEffect(() => {
     if (!isOpen) return;

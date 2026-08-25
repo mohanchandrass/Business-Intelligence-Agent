@@ -17,7 +17,7 @@ export function EmptyState({ onSelectPrompt }: EmptyStateProps) {
     },
     {
       category: "Performance",
-      question: "Compare our energy pipeline with current energy work orders."
+      question: "Which sectors have the most active deals?"
     }
   ];
 
