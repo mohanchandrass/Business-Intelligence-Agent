@@ -95,10 +95,10 @@ class SchemaInspector:
         semantic_fields = {
             "client_code": (["dropdown", "text", "name"], ["client code", "customer", "client"]),
             "deal_value": (["numeric", "numbers", "number"], ["deal value", "value", "amount"]),
-            "deal_stage": (["status", "dropdown"], ["deal stage", "stage", "pipeline stage"]),
-            "deal_status": (["status", "dropdown"], ["deal status", "status"]),
-            "owner_code": (["status", "dropdown", "text", "people", "name"], ["owner", "assignee", "kam"]),
-            "sector": (["status", "dropdown", "text"], ["sector", "industry", "service"]),
+            "deal_stage": (["status", "dropdown", "color"], ["deal stage", "stage", "pipeline stage"]),
+            "deal_status": (["status", "dropdown", "color"], ["deal status", "status"]),
+            "owner_code": (["status", "dropdown", "text", "people", "name", "color"], ["owner", "assignee", "kam"]),
+            "sector": (["status", "dropdown", "text", "color"], ["sector", "industry", "service"]),
             "close_date": (["date"], ["close date", "closure date", "date"])
         }
         
@@ -122,14 +122,14 @@ class SchemaInspector:
             
         semantic_fields = {
             "serial_number": (["text", "name", "dropdown"], ["serial", "serial #", "work order #"]),
-            "customer_code": (["dropdown", "text", "status"], ["customer name code", "customer", "client"]),
-            "execution_status": (["status", "dropdown"], ["execution status", "status", "state"]),
+            "customer_code": (["dropdown", "text", "status", "color"], ["customer name code", "customer", "client"]),
+            "execution_status": (["status", "dropdown", "color"], ["execution status", "status", "state"]),
             "amount_excl_gst": (["numeric", "numbers"], ["amount in rupees (excl", "amount (excl", "excl gst", "amount excl", "billed value"]),
             "amount_incl_gst": (["numeric", "numbers"], ["amount in rupees (incl", "amount (incl", "incl gst", "amount incl"]),
             "amount_receivable": (["numeric", "numbers"], ["amount receivable", "receivable", "amount to be received"]),
             "po_date": (["date"], ["date of po/loi", "po date", "date of po", "loi date"]),
-            "document_type": (["status", "dropdown", "text"], ["document type", "doc type"]),
-            "sector": (["status", "dropdown", "text"], ["sector", "industry"])
+            "document_type": (["status", "dropdown", "text", "color"], ["document type", "doc type"]),
+            "sector": (["status", "dropdown", "text", "color"], ["sector", "industry"])
         }
         
         for field, (expected_types, aliases) in semantic_fields.items():

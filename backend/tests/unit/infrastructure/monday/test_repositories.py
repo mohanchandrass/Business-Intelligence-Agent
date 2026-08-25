@@ -5,7 +5,9 @@ from app.infrastructure.monday.client import MondayClient
 
 @pytest.mark.asyncio
 async def test_monday_deal_repository_pagination():
-    mock_client = AsyncMock(spec=MondayClient)
+    from unittest.mock import MagicMock
+    mock_client = MagicMock(spec=MondayClient)
+    mock_client.execute = AsyncMock()
     
     # Mock responses for two pages
     page_1 = {
@@ -34,9 +36,18 @@ async def test_monday_deal_repository_pagination():
     }
     
     mock_client.execute.side_effect = [page_1, page_2]
+
+    from app.infrastructure.monday.discovery_models import BoardDescriptor, SemanticMapping
+    descriptor = BoardDescriptor(
+        board_id="12345",
+        board_name="Deals Board",
+        columns=[],
+        semantic_mapping=SemanticMapping(mappings={})
+    )
     
-    repo = MondayDealRepository(client=mock_client, board_id="12345")
+    repo = MondayDealRepository(client=mock_client, descriptor=descriptor)
     deals = await repo.get_all_deals()
+
     
     assert len(deals) == 2
     assert deals[0].id == "1"

@@ -15,7 +15,7 @@ export function DataTable({ data }: DataTableProps) {
         </div>
       )}
       <div className="overflow-x-auto">
-        <table className="w-full text-sm text-left">
+        <table className="w-full text-sm text-left table-auto">
           <thead className="bg-background text-muted text-xs uppercase tracking-wider">
             <tr>
               {data.columns.map((col, idx) => (
@@ -29,7 +29,7 @@ export function DataTable({ data }: DataTableProps) {
             {data.data.map((row, rowIdx) => (
               <tr key={rowIdx} className="hover:bg-background/50">
                 {data.columns.map((col, colIdx) => (
-                  <td key={colIdx} className="px-4 py-3 text-foreground">
+                  <td key={colIdx} className="px-4 py-3 text-foreground whitespace-normal break-words min-w-[120px]">
                     {renderCell(col, row[col])}
                   </td>
                 ))}

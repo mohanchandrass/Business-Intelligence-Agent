@@ -21,7 +21,7 @@ export function ChatMessage({ message, onFollowUp }: ChatMessageProps) {
       <div
         className={`flex max-w-full lg:max-w-[85%] ${
           isUser ? "flex-row-reverse" : "flex-row"
-        } gap-4`}
+        } gap-4 min-w-0`}
       >
         <div
           className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-1 ${
@@ -32,10 +32,10 @@ export function ChatMessage({ message, onFollowUp }: ChatMessageProps) {
         </div>
         
         <div
-          className={`flex flex-col ${
+          className={`flex flex-col min-w-0 ${
             isUser
               ? "items-end"
-              : "items-start w-full bg-surface border border-border rounded-2xl rounded-tl-sm p-5 shadow-sm"
+              : "items-start bg-surface border border-border rounded-2xl rounded-tl-sm p-5 shadow-sm"
           }`}
         >
           {/* Main text content */}
@@ -44,7 +44,7 @@ export function ChatMessage({ message, onFollowUp }: ChatMessageProps) {
               {message.content}
             </div>
           ) : (
-            <div className="prose prose-sm prose-slate max-w-none w-full mb-2">
+            <div className="prose prose-sm prose-slate max-w-full w-full mb-2 break-words">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {message.content}
               </ReactMarkdown>
@@ -53,7 +53,7 @@ export function ChatMessage({ message, onFollowUp }: ChatMessageProps) {
 
           {/* Assistant specific structured data */}
           {!isUser && message.response && (
-            <div className="w-full mt-2">
+            <div className="w-full min-w-0 mt-2">
               {/* Insights section if any */}
               {message.response.insights && message.response.insights.length > 0 && (
                 <div className="mb-4 bg-muted/5 p-4 rounded-xl border border-border">

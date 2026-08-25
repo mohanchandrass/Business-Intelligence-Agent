@@ -1,6 +1,7 @@
 from app.infrastructure.monday.dtos import (
     MondayItem, ColumnValue, RawDealRecord, RawWorkOrderRecord
 )
+from app.infrastructure.monday.discovery_models import SemanticMapping
 
 def test_raw_deal_record_mapping():
     item = MondayItem(
@@ -13,7 +14,13 @@ def test_raw_deal_record_mapping():
         ]
     )
     
-    deal_dto = RawDealRecord.from_item(item)
+    mapping = SemanticMapping(mappings={
+        "deal_value": "numeric_mm6jty17",
+        "client_code": "dropdown_mm6jv7st",
+        "deal_stage": "color_mm6jqc55"
+    })
+    
+    deal_dto = RawDealRecord.from_item(item, mapping)
     assert deal_dto.id == "111"
     assert deal_dto.name == "SDPLDEAL-100"
     assert deal_dto.value == "500000"
@@ -31,9 +38,16 @@ def test_raw_work_order_record_mapping():
         ]
     )
     
-    wo_dto = RawWorkOrderRecord.from_item(item)
+    mapping = SemanticMapping(mappings={
+        "serial_number": "dropdown_mm6j6em5",
+        "customer_code": "dropdown_mm6jg7k1",
+        "amount_excl_gst": "numeric_mm6jcs5f"
+    })
+    
+    wo_dto = RawWorkOrderRecord.from_item(item, mapping)
     assert wo_dto.id == "222"
     assert wo_dto.name == "WO-100"
     assert wo_dto.serial_number == "SDPLDEAL-100"
     assert wo_dto.customer_code == "WOCOMPANY_001"
     assert wo_dto.amount_excl_gst == "450000"
+

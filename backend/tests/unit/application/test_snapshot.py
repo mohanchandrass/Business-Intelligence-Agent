@@ -1,5 +1,5 @@
 import pytest
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, patch
 from app.application.snapshot import BusinessDataService
 from app.infrastructure.monday.dtos import RawDealRecord, RawWorkOrderRecord
 
@@ -19,8 +19,14 @@ async def test_business_data_snapshot():
         RawWorkOrderRecord(id="11", name="WO-ORPHAN", serial_number="DEAL-999", amount_excl_gst="500")
     ]
     
-    service = BusinessDataService(deal_repo=mock_deal_repo, wo_repo=mock_wo_repo)
-    snapshot = await service.get_snapshot()
+    mock_catalog = AsyncMock()
+    
+    with patch("app.application.snapshot.MondayDealRepository", return_value=mock_deal_repo), \
+         patch("app.application.snapshot.MondayWorkOrderRepository", return_value=mock_wo_repo):
+         
+        service = BusinessDataService(catalog=mock_catalog)
+        snapshot = await service.get_snapshot()
+
     
     dataset = snapshot.dataset
     

@@ -53,15 +53,31 @@ class SectorAnalytics:
         if missing_sector > 0 and not target_sector:
             warnings.append(f"{missing_sector} deals have an unknown sector and could not be properly categorized.")
 
+        all_sectors = set(pipeline_value_by_sector.keys()) | set(wo_value_by_sector.keys())
+        table_data = []
+        for sector in sorted(all_sectors):
+            table_data.append({
+                "Sector": sector,
+                "Pipeline Value": pipeline_value_by_sector[sector],
+                "Execution Value": wo_value_by_sector[sector]
+            })
+
+        total_pipe = sum(pipeline_value_by_sector.values())
+        total_exec = sum(wo_value_by_sector.values())
+
         return AnalyticsResult(
-            metric_name=f"Sector Performance: {target_sector or 'All Sectors'}",
-            value=sum(pipeline_value_by_sector.values()) if not target_sector else pipeline_value_by_sector.get(target_sector, 0.0),
-            dimensions={
-                "pipeline_value_by_sector": dict(pipeline_value_by_sector),
-                "deal_count_by_sector": dict(deal_count_by_sector),
-                "work_order_value_by_sector": dict(wo_value_by_sector),
-                "work_order_count_by_sector": dict(wo_count_by_sector)
-            },
-            data_quality_warnings=warnings,
-            source_scope="Deals and Work Orders"
+            kpis=[
+                {"type": "kpi", "title": "Total Pipeline Value", "value": f"₹{total_pipe:,.2f}"},
+                {"type": "kpi", "title": "Total Execution Value", "value": f"₹{total_exec:,.2f}"}
+            ],
+            tables=[
+                {
+                    "type": "table",
+                    "title": f"Sector Performance: {target_sector or 'All Sectors'}",
+                    "columns": ["Sector", "Pipeline Value", "Execution Value"],
+                    "data": table_data
+                }
+            ],
+            warnings=warnings,
+            metadata={"scope": "Deals and Work Orders"}
         )

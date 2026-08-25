@@ -22,15 +22,24 @@ class CrossBoardAnalytics:
             warnings.append(f"{len(self.dataset.orphan_work_orders)} work orders could not be matched to any deal.")
             
         return AnalyticsResult(
-            metric_name="Cross-Board Overview",
-            value=deals_with_wos,
-            dimensions={
-                "deals_with_work_orders": deals_with_wos,
-                "deals_without_work_orders": len(self.dataset.deals_without_work_orders),
-                "orphan_work_orders": len(self.dataset.orphan_work_orders),
-                "pipeline_value": deals_pipeline_val,
-                "execution_value": execution_val,
-            },
-            data_quality_warnings=warnings,
-            source_scope="Joined Deals & Work Orders"
+            kpis=[
+                {"type": "kpi", "title": "Matched Deals", "value": str(deals_with_wos)},
+                {"type": "kpi", "title": "Deals w/o WOs", "value": str(len(self.dataset.deals_without_work_orders))},
+                {"type": "kpi", "title": "Pipeline Value", "value": f"₹{deals_pipeline_val:,.2f}"},
+                {"type": "kpi", "title": "Execution Value", "value": f"₹{execution_val:,.2f}"}
+            ],
+            tables=[
+                {
+                    "type": "table",
+                    "title": "Cross-Board Relationship",
+                    "columns": ["Metric", "Count"],
+                    "data": [
+                        {"Metric": "Deals with Work Orders", "Count": deals_with_wos},
+                        {"Metric": "Deals without Work Orders", "Count": len(self.dataset.deals_without_work_orders)},
+                        {"Metric": "Orphan Work Orders", "Count": len(self.dataset.orphan_work_orders)}
+                    ]
+                }
+            ],
+            warnings=warnings,
+            metadata={"scope": "Joined Deals & Work Orders"}
         )

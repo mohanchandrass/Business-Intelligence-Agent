@@ -1,0 +1,198 @@
+{
+  "deals_board": {
+    "id": "5030842994",
+    "name": "Deal funnel Data",
+    "classification_confidence": 0.9999999999999999,
+    "evidence": [
+      "Board name 'Deal funnel Data' suggests deals/pipeline.",
+      "Found client_code -> dropdown_mm6jv7st (Score 1.5: [\"Exact match on alias 'client code'\", \"Partial match on alias 'client'\", 'Matches expected type dropdown'])",
+      "Found deal_value -> numeric_mm6jty17 (Score 1.0: [\"Partial match on alias 'deal value'\", \"Partial match on alias 'value'\", 'Matches expected type numbers'])",
+      "Found deal_stage -> color_mm6jqc55 (Score 1.5: [\"Exact match on alias 'deal stage'\", \"Partial match on alias 'stage'\", 'Matches expected type status'])",
+      "Found deal_status -> color_mm6jfhrv (Score 1.5: [\"Exact match on alias 'deal status'\", \"Partial match on alias 'status'\", 'Matches expected type status'])",
+      "Found owner_code -> color_mm6jnrdp (Score 0.5: [\"Partial match on alias 'owner'\", 'Matches expected type status'])",
+      "Found sector -> color_mm6js3d9 (Score 1.0: [\"Partial match on alias 'sector'\", \"Partial match on alias 'service'\", 'Matches expected type status'])",
+      "Found close_date -> date_mm6jqctt (Score 1.0: [\"Partial match on alias 'close date'\", \"Partial match on alias 'date'\", 'Matches expected type date'])"
+    ],
+    "semantic_mapping": {
+      "client_code": "dropdown_mm6jv7st",
+      "deal_value": "numeric_mm6jty17",
+      "deal_stage": "color_mm6jqc55",
+      "deal_status": "color_mm6jfhrv",
+      "owner_code": "color_mm6jnrdp",
+      "sector": "color_mm6js3d9",
+      "close_date": "date_mm6jqctt"
+    }
+  },
+  "work_orders_board": {
+    "id": "5030842979",
+    "name": "Work_Order_Tracker Data",
+    "classification_confidence": 1.2,
+    "evidence": [
+      "Board name 'Work_Order_Tracker Data' suggests work orders.",
+      "Found serial_number -> dropdown_mm6j6em5 (Score 1.5: [\"Partial match on alias 'serial'\", \"Exact match on alias 'serial #'\", 'Matches expected type dropdown'])",
+      "Found customer_code -> dropdown_mm6jg7k1 (Score 1.5: [\"Exact match on alias 'customer name code'\", \"Partial match on alias 'customer'\", 'Matches expected type dropdown'])",
+      "Found execution_status -> color_mm6jr91h (Score 1.5: [\"Exact match on alias 'execution status'\", \"Partial match on alias 'status'\", 'Matches expected type status'])",
+      "Found amount_excl_gst -> numeric_mm6jcs5f (Score 0.5: [\"Partial match on alias 'amount in rupees (excl'\", 'Matches expected type numbers'])",
+      "Found amount_incl_gst -> numeric_mm6j22w6 (Score 0.5: [\"Partial match on alias 'amount in rupees (incl'\", 'Matches expected type numbers'])",
+      "Found amount_receivable -> numeric_mm6jeayv (Score 1.0: [\"Partial match on alias 'amount receivable'\", \"Partial match on alias 'receivable'\", 'Matches expected type numbers'])",
+      "Found po_date -> date_mm6j2525 (Score 1.5: [\"Exact match on alias 'date of po/loi'\", \"Partial match on alias 'date of po'\", 'Matches expected type date'])",
+      "Found document_type -> color_mm6jhdwk (Score 1.0: [\"Exact match on alias 'document type'\", 'Matches expected type status'])",
+      "Found sector -> color_mm6j32nf (Score 1.0: [\"Exact match on alias 'sector'\", 'Matches expected type status'])"
+    ],
+    "semantic_mapping": {
+      "serial_number": "dropdown_mm6j6em5",
+      "customer_code": "dropdown_mm6jg7k1",
+      "execution_status": "color_mm6jr91h",
+      "amount_excl_gst": "numeric_mm6jcs5f",
+      "amount_incl_gst": "numeric_mm6j22w6",
+      "amount_receivable": "numeric_mm6jeayv",
+      "po_date": "date_mm6j2525",
+      "document_type": "color_mm6jhdwk",
+      "sector": "color_mm6j32nf"
+    }
+  },
+  "statistics": {
+    "total_deals": 346,
+    "total_work_orders": 176,
+    "deals_without_work_orders": 346,
+    "orphan_work_orders": 176,
+    "total_matched_deals": 0,
+    "normalization_issues": 184
+  },
+  "representative_deals": [
+    {
+      "id": "2844821955",
+      "name": "Naruto",
+      "client_id": "COMPANY_089",
+      "value": 489360.0,
+      "close_date": null,
+      "stage": "B. Sales Qualified Leads",
+      "status": "Open",
+      "sector": "Mining"
+    },
+    {
+      "id": "2844858708",
+      "name": "Sasuke",
+      "client_id": "COMPANY_091",
+      "value": 17616960.0,
+      "close_date": null,
+      "stage": "B. Sales Qualified Leads",
+      "status": "Open",
+      "sector": "Mining"
+    },
+    {
+      "id": "2844858709",
+      "name": "Sasuke",
+      "client_id": "COMPANY_124",
+      "value": 611700.0,
+      "close_date": null,
+      "stage": "E. Proposal/Commercials Sent",
+      "status": "Open",
+      "sector": "Powerline"
+    },
+    {
+      "id": "2844858710",
+      "name": "Sakura",
+      "client_id": "COMPANY_046",
+      "value": 2348928.0,
+      "close_date": null,
+      "stage": "E. Proposal/Commercials Sent",
+      "status": "Open",
+      "sector": "Powerline"
+    },
+    {
+      "id": "2844858711",
+      "name": "Sakura",
+      "client_id": "COMPANY_148",
+      "value": 428190.0,
+      "close_date": null,
+      "stage": "E. Proposal/Commercials Sent",
+      "status": "Open",
+      "sector": "Powerline"
+    }
+  ],
+  "representative_work_orders": [
+    {
+      "id": "2844826028",
+      "name": "Scooby-Doo",
+      "deal_reference": "SDPLDEAL-075",
+      "client_id": "COMPANY_002",
+      "execution_status": "Completed",
+      "value_excl_gst": 264398.08,
+      "po_date": "2025-10-29",
+      "sector": "Mining"
+    },
+    {
+      "id": "2844826029",
+      "name": "Appa",
+      "deal_reference": "SDPLDEAL-101",
+      "client_id": "COMPANY_038",
+      "execution_status": "Not Started",
+      "value_excl_gst": 154150.0,
+      "po_date": "2025-07-31",
+      "sector": "Powerline"
+    },
+    {
+      "id": "2844826030",
+      "name": "Sakura",
+      "deal_reference": "SDPLDEAL-002",
+      "client_id": "COMPANY_002",
+      "execution_status": "Executed until current month",
+      "value_excl_gst": 2984097.36,
+      "po_date": "2025-05-16",
+      "sector": "Mining"
+    },
+    {
+      "id": "2844826031",
+      "name": "Sakura",
+      "deal_reference": "SDPLDEAL-003",
+      "client_id": "COMPANY_002",
+      "execution_status": "Completed",
+      "value_excl_gst": 184980.0,
+      "po_date": "2025-05-08",
+      "sector": "Mining"
+    },
+    {
+      "id": "2844826032",
+      "name": "SpongeBob",
+      "deal_reference": "SDPLDEAL-004",
+      "client_id": "COMPANY_032",
+      "execution_status": "Completed",
+      "value_excl_gst": 1132250.248,
+      "po_date": "2025-05-06",
+      "sector": "Powerline"
+    }
+  ],
+  "normalization_issues_sample": [
+    {
+      "record_type": "Unknown",
+      "field": "value",
+      "issue_type": "MISSING_VALUE",
+      "message": "value is missing"
+    },
+    {
+      "record_type": "Unknown",
+      "field": "value",
+      "issue_type": "MISSING_VALUE",
+      "message": "value is missing"
+    },
+    {
+      "record_type": "Unknown",
+      "field": "value",
+      "issue_type": "MISSING_VALUE",
+      "message": "value is missing"
+    },
+    {
+      "record_type": "Unknown",
+      "field": "value",
+      "issue_type": "MISSING_VALUE",
+      "message": "value is missing"
+    },
+    {
+      "record_type": "Deal",
+      "field": "client_code",
+      "issue_type": "MISSING_VALUE",
+      "message": "Client code is missing"
+    }
+  ]
+}

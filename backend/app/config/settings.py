@@ -9,6 +9,7 @@ load_dotenv(os.path.join(os.path.dirname(__file__), "../../../.env"))
 
 class ApplicationSettings(BaseSettings):
     app_name: str = "Skylark BI Backend"
+    cors_origins: str = Field("http://localhost:3000,http://10.17.7.218:3000", validation_alias="CORS_ORIGINS")
 
 class MondaySettings(BaseSettings):
     api_token: str = Field(..., validation_alias="MONDAY_API_TOKEN")

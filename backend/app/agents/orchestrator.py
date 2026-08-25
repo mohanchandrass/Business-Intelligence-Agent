@@ -42,7 +42,7 @@ class AgentOrchestrator:
         )
         return types.Tool(function_declarations=[func_decl])
 
-    async def execute(self, query: str, snapshot_factory: Callable[[], Awaitable[BusinessDataSnapshot]], req_id: str = "REQ unknown") -> str:
+    async def execute(self, query: str, snapshot_factory: Callable[[], Awaitable[BusinessDataSnapshot]], req_id: str = "REQ unknown") -> Dict[str, Any]:
         messages = [{"role": "user", "parts": [{"text": query}]}]
         snapshot: Optional[BusinessDataSnapshot] = None
         
@@ -52,6 +52,9 @@ class AgentOrchestrator:
         
         max_turns = self.settings.max_tool_calls if hasattr(self.settings, 'max_tool_calls') else 5
         turn_count = 0
+        
+        collected_data = []
+        collected_warnings = []
         
         while turn_count < max_turns:
             turn_count += 1
@@ -67,22 +70,24 @@ class AgentOrchestrator:
             logger.info(f"[{req_id}] GEMINI RESPONSE received: has_text={bool(response.text)}, tool_calls={len(response.tool_calls) if response.tool_calls else 0}")
             
             if response.tool_calls:
-                # Log specifics about the thought signature if present in the raw parts
                 for tc in response.tool_calls:
-                    # Depending on how the provider exposes the raw parts:
                     logger.info(f"[{req_id}] Gemini returned function call: {tc.tool_name}")
-                    # We won't log the thought signature explicitly but note if we see it in parts
-                    logger.info(f"[{req_id}] thought_signature present: NO (manually dropped by orchestrator logic)")
 
-            # If there's text, we can append it as model's response (or parts of it)
             if response.text and not response.tool_calls:
                 logger.info(f"[{req_id}] GEMINI FINAL RESPONSE generated")
-                return response.text
+                return {
+                    "answer": response.text,
+                    "data": collected_data,
+                    "warnings": collected_warnings
+                }
                 
             if not response.tool_calls:
-                # Fallback if no text and no tool calls
                 logger.info(f"[{req_id}] GEMINI FINAL RESPONSE (fallback)")
-                return "I couldn't process your request."
+                return {
+                    "answer": "I couldn't process your request.",
+                    "data": collected_data,
+                    "warnings": collected_warnings
+                }
                 
             # Add the model's tool call back to history
             # We preserve the raw SDK content (which includes the thought_signature and tool call IDs)
@@ -115,6 +120,16 @@ class AgentOrchestrator:
                     # Execute
                     result = await tool_def.handler(snapshot, args)
                     logger.info(f"[{req_id}] TOOL RESULT generated for {tc.tool_name}")
+                    
+                    # Collect visualization data and warnings for frontend
+                    if result.data:
+                        if "kpis" in result.data:
+                            collected_data.extend(result.data["kpis"])
+                        if "tables" in result.data:
+                            collected_data.extend(result.data["tables"])
+                    if result.warnings:
+                        collected_warnings.extend(result.warnings)
+                        
                     # Serialize result
                     tool_responses.append({
                         "name": tc.tool_name,
@@ -134,4 +149,8 @@ class AgentOrchestrator:
             })
             
         logger.info(f"[{req_id}] Tool limit reached")
-        return "I've reached my internal tool execution limit and couldn't complete the request."
+        return {
+            "answer": "I've reached my internal tool execution limit and couldn't complete the request.",
+            "data": collected_data,
+            "warnings": collected_warnings
+        }

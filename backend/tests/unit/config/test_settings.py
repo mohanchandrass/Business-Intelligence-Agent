@@ -16,11 +16,11 @@ def test_settings_can_instantiate_with_env(monkeypatch):
     assert settings.monday.deals_board_id == "123"
     assert settings.gemini.api_key == "fake_gemini"
 
-def test_settings_fails_without_required_secrets():
+def test_settings_fails_without_required_secrets(monkeypatch):
     """Test that settings fail to instantiate if required variables are missing."""
     # Ensure environment is clear of required vars
-    if "MONDAY_API_TOKEN" in os.environ:
-        del os.environ["MONDAY_API_TOKEN"]
+    monkeypatch.delenv("MONDAY_API_TOKEN", raising=False)
         
     with pytest.raises(ValidationError):
         MondaySettings()
+

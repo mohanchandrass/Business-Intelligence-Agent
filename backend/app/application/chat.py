@@ -28,23 +28,14 @@ class ChatApplicationService:
             
             # 2. Run orchestrator
             logger.info(f"[{req_id}] Handing off to AgentOrchestrator")
-            answer = await self.orchestrator.execute(query, snapshot_factory, req_id)
+            result = await self.orchestrator.execute(query, snapshot_factory, req_id)
 
-            
-            # 3. Assemble response mapping to the frontend contract
-            # Since the snapshot is fetched lazily, we don't have it here to check global warnings.
-            # But the user requested: "Only show warnings relevant to the requested analysis."
-            # The warnings will be part of the structured tool result!
-            warnings = []
-            # For this MVP, we return the text response and high-level warnings.
             return {
-                "answer": answer,
+                "answer": result.get("answer", ""),
                 "insights": [],
-                "metrics": {},
-                "warnings": warnings,
-                "metadata": {
-                    "records_inspected": snapshot.data_quality_report.total_records_inspected
-                }
+                "data": result.get("data", []),
+                "warnings": result.get("warnings", []),
+                "metadata": {}
             }
             
         except Exception as e:
