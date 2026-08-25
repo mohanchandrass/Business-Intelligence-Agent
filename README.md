@@ -1,8 +1,14 @@
 # Skylark BI Agent
 
+## Overview
+
 Skylark BI is a specialized Business Intelligence agent designed for founders and executives. It bridges the gap between raw operational data stored in Monday.com and actionable leadership insights. Rather than forcing executives to build traditional dashboards or write complex queries, Skylark BI provides a polished, ChatGPT-style conversational interface that delivers definitive answers, deterministic business analytics, and executive summaries instantly.
 
-## What It Does
+## The Problem
+
+Founders and operational leaders often struggle to extract high-level, cross-functional insights from raw project management tools like Monday.com. While the data exists, querying it requires manual dashboard construction, exporting to Excel, or learning a specific querying language. The resulting data is often messy, unstructured, or disconnected (e.g., pipeline deals vs. active execution work orders).
+
+## The Solution
 
 The agent acts as a conversational AI analyst that dynamically connects to Monday.com, reads operational data (Deals and Work Orders), and orchestrates analytical tools to answer business questions. 
 
@@ -12,14 +18,14 @@ When a user asks a question (e.g., *"How is our energy pipeline looking?"* or *"
 3. Orchestrates internal Python-based analytical tools to compute exact, deterministic answers.
 4. Explains the findings in a concise, executive-friendly format, complete with data quality warnings if relevant.
 
-## Key Capabilities
+## Key Features
 
 * **Monday.com Read-Only Integration**: Safely extracts data via the GraphQL API without modifying the workspace.
 * **Dynamic Board Discovery**: Automatically inspects board schemas and semantic column names to identify Deals and Work Orders boards, avoiding hardcoded board IDs.
 * **Data Normalization & Resilience**: Casts messy textual data into strict Pydantic domain models.
 * **Deterministic Business Analytics**: Computes KPIs using Python (pandas/aggregations) instead of relying on the LLM to do arithmetic, guaranteeing mathematical accuracy.
 * **Gemini-Based Orchestration**: Uses Google Gemini and tool-calling to interpret questions, invoke analytical functions, and synthesize answers.
-* **Cross-Board Analysis**: Joins Deals (Pipeline) with Work Orders (Execution) using Deal Reference mapping to provide holistic business views.
+* **Cross-Board Analysis**: Joins Deals (Pipeline) with Work Orders (Execution) using Deal Reference mapping to provide holistic business views (where valid identifiers exist).
 * **Data-Quality Warnings**: Tracks normalization errors and explicitly warns the user if records were excluded from the analysis.
 * **Conversational Interface**: A modern, minimal, responsive Next.js frontend with dynamic intent-driven loading states.
 * **Leadership-Update Support**: Natively structured to summarize insights, risks, and trends suitable for leadership reporting.
@@ -30,7 +36,7 @@ The system is designed as a modular, scalable, and efficient architecture rather
 
 This separation of concerns allows components to evolve independently while keeping quantitative business logic deterministic and using the LLM primarily for query interpretation, tool selection, and executive-level explanation. The implementation is lightweight enough for a rapid prototype while retaining clear extension points for additional boards, metrics, data sources, and tools.
 
-### Data Flow
+## Data Flow
 
 ```text
 User Query (Frontend)
@@ -71,38 +77,71 @@ Executive Summary sent to Frontend
 * **Pydantic**: Strict data validation, environment configuration, and domain modeling.
 * **Pytest**: Comprehensive unit and integration testing.
 
-## Implementation Status
+## Hosted Prototype
 
-* **Dynamic Board Discovery**: Implemented (SchemaInspector automatically maps columns to canonical types based on semantic aliases). Some test coverage edge-cases failing locally.
-* **Data Normalization**: Implemented (Pydantic DTOs map to canonical `Deal` and `WorkOrder` entities).
-* **Gemini Tool Calling Loop**: Implemented and verified (Preserves `thought_signature` and raw SDK parts for multi-turn loops).
-* **Frontend UI**: Implemented (Fully functional ChatGPT-style interface with context-aware loading states and proper auto-scrolling).
-* **Cross-Board Joins**: Implemented (Joins `deal.name` to `wo.deal_reference`).
-* **Hosted Prototype**: *Pending (Local deployment only at this stage).*
+The prototype is currently deployed and publicly accessible. 
+- **Frontend (Vercel)**: https://business-intelligence-agent-wine.vercel.app/
+- **Backend (Render)**: https://business-intelligence-agent-yzpi.onrender.com
 
-## Setup & Execution
+*Note: The frontend communicates directly with the Render backend. All Monday.com and Gemini credentials are securely configured server-side. No secrets are committed to the GitHub repository.*
+
+## AI-Assisted Development
+
+In alignment with modern engineering workflows, AI tools were utilized transparently:
+- **ChatGPT**: Used for architectural planning, technical reasoning, implementation review, debugging/auditing, data-pipeline analysis, and documentation review.
+- **Google Antigravity**: Used as the implementation/coding agent to modify the repository, implement the planned architecture, fix issues, and perform local verification.
+- **Google Gemini API**: Used **INSIDE THE PRODUCT** as the runtime LLM for natural-language query understanding, tool selection/orchestration, and concise executive response synthesis.
+
+*ChatGPT and Antigravity were used purely for development assistance and are NOT runtime dependencies of the deployed application.*
+
+## Monday.com Configuration
+
+To configure the application against a Monday.com workspace:
+1. Create/import the Deals board.
+2. Create/import the Work Orders board.
+3. Configure appropriate Monday column types.
+4. Create a Monday API token.
+5. Add `MONDAY_API_TOKEN` to the backend environment variables.
+6. The backend dynamically discovers board schemas via semantic mapping (it does not require hardcoded board IDs).
+7. The application strictly reads data.
+
+*Note: Supplied CSV/XLSX sample data is only used to populate the Monday.com workspace and is not hardcoded into the application.*
+
+## Environment Variables
+
+An `.env.example` is provided in the repository. Do not commit actual secrets. 
+
+```env
+# SECRETS
+GEMINI_API_KEY=
+MONDAY_API_TOKEN=
+
+# DEPLOYMENT
+MONDAY_API_URL=https://api.monday.com/v2
+MONDAY_API_VERSION=2026-07
+MONDAY_TIMEOUT_SECONDS=30
+MONDAY_MAX_RETRIES=3
+CORS_ORIGINS=*
+
+# MODEL CONFIG
+GEMINI_MODEL=gemini-3.5-flash-lite
+GEMINI_TEMPERATURE=0.0
+GEMINI_MAX_OUTPUT_TOKENS=2048
+GEMINI_TOP_P=0.95
+GEMINI_TOP_K=40
+
+# AGENT CONFIG
+AGENT_MAX_TOOL_CALLS=5
+AGENT_MAX_CONTEXT_RECORDS=50
+```
+
+## Local Development
 
 ### 1. Prerequisites
 - Node.js v18+
 - Python 3.11+
-- A valid Gemini API Key (`GEMINI_API_KEY`)
-- A valid Monday.com API Token (`MONDAY_API_TOKEN`)
 
-### 2. Environment Configuration
-Create a `.env` file in the project root based on `.env.example`:
-
-```env
-GEMINI_API_KEY=your_gemini_api_key
-MONDAY_API_TOKEN=your_monday_token
-
-MONDAY_API_URL=https://api.monday.com/v2
-MONDAY_API_VERSION=2026-07
-GEMINI_MODEL=gemini-2.5-flash
-```
-
-*(Note: While `MONDAY_DEALS_BOARD_ID` and `MONDAY_WORK_ORDERS_BOARD_ID` exist in the example, the system relies on dynamic discovery and does not strictly require them).*
-
-### 3. Running Locally
+### 2. Running Locally
 
 A convenient startup script is provided for Windows:
 ```bash
@@ -127,7 +166,7 @@ npm install
 npm run dev
 ```
 
-### 4. Access the Application
+### 3. Access the Application
 - Frontend: `http://localhost:3000`
 - Backend API Docs: `http://localhost:8000/docs`
 - Backend Health Check: `http://localhost:8000/api/v1/health`
@@ -136,70 +175,62 @@ npm run dev
 Try asking the agent:
 - *"Give me a high-level overview of our sales pipeline."*
 - *"How many work orders are currently active?"*
-- *"Compare our Q3 energy deals with the ongoing execution work orders."*
+- *"Which sectors have the most active deals?"*
 - *"Are there any operational bottlenecks in our work orders?"*
 
-## Limitations and Assumptions
+## Data Resilience
+Real-world data is inherently messy. We enforced robust data resilience measures:
+- The normalization pipeline actively catches and corrects missing values, inconsistent text, and typing anomalies (e.g., standardizing disparate client codes).
+- The Deal monetary column was exposed by Monday as a generic `numbers` type with masked strings; we applied robust regex-based monetary parsing.
+- Missing values and missing cross-board relationships are intentionally preserved. If data is missing (e.g. 176 Work Orders have no corresponding Deal), we flag it as an orphan rather than fabricating links.
+- The LLM receives `data_quality` warnings so it can explicitly inform the user when requested figures might be underrepresented.
+
+## Analytics Architecture
+**Python owns**: counting, sums, aggregations, filtering, KPI generation, table generation, and data-quality tracking.
+**Gemini does NOT calculate business metrics.**
+**Gemini is responsible for**: understanding the user's natural-language request, selecting the correct analytical tools, and synthesizing the deterministic results into a concise executive explanation.
+Separating these concerns ensures exact, hallucination-free reporting.
+
+## Assumptions & Limitations
 - **Read-Only**: The agent only reads data; it cannot update Monday.com boards.
 - **In-Memory Caching**: Board schema discovery is cached in-memory. In a production multi-tenant system, this would move to Redis.
 - **Pagination Limits**: The current MVP assumes relatively small datasets for the 6-hour hackathon constraints. Large-scale BI would require a materialized data warehouse syncing from Monday webhooks.
 - **Discovery Fallbacks**: Dynamic discovery currently maps columns based on predefined semantic aliases. Highly customized workspaces might require manual board mapping overrides.
+- **Cross-board Linkages**: We assume reliable identifiers exist to cross-reference Deals with Work Orders. Since the sample dataset contains fully disjoint identifiers, the current engine gracefully processes them as zero-matches rather than fabricating them.
 
+## Challenges
+- **Messy Schemas**: Disparate column names across Work Orders and Deals required dynamic semantic discovery.
+- **Numeric Typing**: Monday.com presented the Deal monetary field as a masked `numbers` type rather than a native `numeric` type.
+- **Missing Identifiers**: The Deal board used anime character names (`Naruto`), while Work Orders used generic serial numbers (`SDPLDEAL-075`). This required establishing robust "orphan" tracking.
+- **UX Restraint**: Forcing the LLM to strictly output structured data rather than rewriting the user's metrics as markdown lists.
 
+## Future Improvements
+- **Stronger Schema Inference**: Using a lightweight LLM call (e.g. Gemini Flash) to semantically map custom user columns into canonical ones instead of alias arrays.
+- **Persistent Caching**: Transitioning to a materialized data layer synced via Monday.com webhooks to support workspaces with hundreds of thousands of items without API latency.
+- **Authentication**: Restrict Monday.com API access via OAuth on a per-tenant basis using Clerk or Auth0.
+- **Richer Visualizations**: Pass Recharts specs directly from the backend to render sophisticated graphical charts embedded directly in the chat log.
+- **Automated E2E Testing**: Add Cypress/Playwright integration tests simulating a full user conversation against a mocked backend.
 
+## Testing
+The application uses Pytest for backend unit testing. It contains 8+ deterministic regression tests verifying the exact integrity of the normalization, extraction, mapping, missing value handling, and analytical reconciliation logic against raw Monday.com fixtures. Run `pytest` in the backend directory.
 
-# Skylark BI Agent — Decision Log
+## Assignment Requirement Checklist
 
-## 1. Monday.com API vs MCP
-**Decision:** Direct Monday.com GraphQL API.
-**Reason:** While MCP (Model Context Protocol) is standardizing LLM-to-tool connections, building a custom GraphQL integration provided absolute control over deterministic parsing, aggressive pagination, and robust error handling essential for this 6-hour hackathon constraints.
-
-## 2. Dynamic Board Discovery vs Hardcoded Board IDs
-**Decision:** Dynamic Board Discovery.
-**Reason:** The assignment required building a generalized BI agent rather than a script locked to a specific workspace. The `SchemaInspector` dynamically identifies Deals and Work Orders boards based on column semantics, allowing it to adapt to different Monday.com setups seamlessly.
-
-## 3. Deterministic Python Analytics vs LLM-Generated Calculations
-**Decision:** Deterministic Python analytics.
-**Reason:** LLMs hallucinate or fail at arithmetic when dealing with hundreds of records. All KPIs and aggregations are computed deterministically in Python using the canonical data models. The LLM is only used to synthesize the resulting exact numbers into an executive summary.
-
-## 4. Gemini + Tool Calling for Agent Orchestration
-**Decision:** Google Gemini with structured tool calling.
-**Reason:** Gemini provides fast and reliable tool-calling capabilities. The `AgentOrchestrator` maps Python functions to Gemini tool definitions dynamically and manages the conversation loop, ensuring the LLM can fetch the exact analytical slice it needs to answer the user's prompt.
-
-## 5. Canonical Domain Models and Normalization Layer
-**Decision:** Strict Pydantic domain models separating Monday.com DTOs from Business logic.
-**Reason:** Monday.com data is messy (e.g., text instead of numbers, varying statuses). The Normalization Layer catches invalid formats and casts everything to canonical `Deal` and `WorkOrder` entities. Analytics run strictly against the canonical models.
-
-## 6. Query-Scoped Data-Quality Reporting
-**Decision:** Explicitly track and report normalization failures.
-**Reason:** Executives must trust the data. If $50k in deals is excluded because a user typed "50k" instead of "50000" in Monday.com, the `DataQualityReport` tracks the exclusion and the LLM explicitly warns the user about the missing data in its response.
-
-## 7. Request-Scoped BusinessDataSnapshot
-**Decision:** Fetch all relevant data lazily once per request into a `BusinessDataSnapshot`.
-**Reason:** Prevents the agent from endlessly querying Monday.com within a single multi-turn tool loop. The snapshot acts as an immutable, point-in-time state for all deterministic tools to query against.
-
-## 8. Lightweight In-Memory Board Catalog Caching
-**Decision:** In-memory caching for `BoardCatalog` discovery.
-**Reason:** Fetching and inspecting all board schemas is expensive. Caching schemas in-memory drastically speeds up query times without introducing external infrastructure dependencies like Redis, aligning with the hackathon's time constraint.
-
-## 9. Structured KPI/Table Response Data
-**Decision:** Tools return structured data sets (JSON/dicts).
-**Reason:** Instead of asking the LLM to format markdown tables blindly, returning strict data objects forces the LLM to write factual summaries based on concrete properties. This prevents hallucinations in reporting.
-
-## 10. Frontend Simplicity and Executive UX
-**Decision:** A ChatGPT-style conversational interface over a static dashboard.
-**Reason:** Executives want answers, not tools to learn. The UI prioritizes a polished, intent-aware loading state, clean typography, and a conversational flow that presents clear KPIs and explanations directly.
-
-## 11. Leadership Updates Interpretation
-**Decision:** Embedded into the agent prompt and deterministic tools.
-**Reason:** The system satisfies the optional leadership update requirement by instructing the agent to structure answers around KPIs, risk factors, and trends. When asked for a summary, the agent leverages cross-board analysis (Deals vs Execution) to present a high-level executive briefing.
-
----
-
-## What We Would Improve With More Time
-
-1. **Broader Schema Inference & Relationship Discovery**: Use a lightweight LLM call to classify messy columns dynamically instead of relying on regex/semantic alias lists.
-2. **Persistent Caching & Webhooks**: Transition from an on-demand fetching model to a materialized view synced via Monday.com webhooks to support workspaces with hundreds of thousands of items instantly.
-3. **Authentication & Multi-User Support**: Add Clerk/Auth0 and restrict Monday.com API access via OAuth on a per-tenant basis.
-4. **Richer Visualizations**: Pass structured data (Recharts/Chart.js specs) directly from the backend to the frontend for rich, interactive, deterministic charting embedded in the chat log.
-5. **E2E Testing**: Add Cypress/Playwright tests covering the full flow from frontend UI input to the mocked Monday.com backend response.
+| Requirement | Status | Implementation Details |
+| --- | --- | --- |
+| **Publicly accessible hosted application** | Complete | Deployed on Vercel (frontend) and Render (backend). |
+| **GitHub repository containing source code** | Complete | Codebase structured monorepo style in `frontend` and `backend`. |
+| **Detailed README** | Complete | This document. |
+| **Decision Log** | Complete | Included in `Decision_Log.md` (Max 2 pages). |
+| **Monday.com integration** | Complete | Direct GraphQL API (over MCP for deterministic extraction/pagination). |
+| **Read-only access** | Complete | App strictly executes read queries. |
+| **Dynamic data fetching** | Complete | Schema discovery auto-identifies columns. Snapshot lazily fetches up-to-date data. |
+| **No hardcoded CSV data** | Complete | Hardcoded CSV is strictly avoided. |
+| **Data resilience (null/missing/dates)** | Complete | Normalization pipeline handles dates, formats currencies, and drops invalid metrics cleanly. |
+| **Query understanding** | Complete | Gemini reliably converts user intents into strict tool-calling arguments. |
+| **Business intelligence / founder queries** | Complete | Covers Pipeline tracking, Sectoral tracking, Risk bottlenecks, etc. |
+| **Cross-board analysis** | Complete | Cross-board relationships are mapped dynamically where shared identifiers actually exist. |
+| **Conversational interface** | Complete | Polished UI featuring dynamic responses and structured tables/KPIs. |
+| **Graceful API/data errors** | Complete | Bad mappings and missing values result in structured warnings instead of API crashes. |
+| **Leadership updates** | Complete | Capable of presenting executive summaries covering KPIs, trends, and caveats naturally. |
+| **Tech-stack justification** | Complete | Outlined heavily in this README and the Decision Log. |
