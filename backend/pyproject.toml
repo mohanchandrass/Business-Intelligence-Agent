@@ -1,0 +1,30 @@
+[project]
+name = "skylark-bi-agent-backend"
+version = "0.1.0"
+description = "FastAPI backend for Skylark BI Agent"
+authors = [
+    {name = "Hackathon Team"}
+]
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "pydantic",
+    "pydantic-settings",
+    "httpx",
+    "pandas",
+    "openpyxl",
+    "python-dotenv"
+]
+
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q"
+testpaths = [
+    "tests",
+]
